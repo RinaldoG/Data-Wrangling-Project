@@ -1,0 +1,287 @@
+---
+title: MATH2349 Data Wrangling
+subtitle: Assignment 1
+author: Rinaldo Gagiano ~ S3870806
+output:
+  pdf_document
+---
+```{r include = FALSE}
+options(pillar.sigfig=7)
+```
+#Setup
+Installing and loading of necassary packages to reproduce this report:
+```{r include = TRUE}
+library(readr) # Useful for importing data
+library(tidyverse) # Useful for data frame manipulation
+```
+
+#Data Description
+The dataset 'price-of-weed' comes from the user 'frankbi' hosted on GitHub. It was taken from the URL: https://github.com/frankbi/price-of-weed/raw/master/data/weedprices01012014.csv. The dataset contains weed quality pricing, in US dollars, and the number of weed quality reports within each state of the USA.  
+  
+The 'price-of-weed' dataset consists of 7 variables highlighted below:      
+  
+* 'State' variable consisting of the names of each state located within the USA.  
+* 'HighQ' variable denoting the average price, in US Dollars, of high-quality weed within the state.  
+* 'HighQN' variable totalling the quantity of high-quality weed price reports made within the state.  
+* 'MedQ' variable denoting the average price, in US Dollars, of medium-quality weed within the state.  
+* 'MedQn' variable totalling the quantity of medium-quality weed price reports made within the state.  
+* 'LowQ' variable denoting the average price, in US Dollars, of low-quality weed within the state.  
+* 'LowQN' variable totalling the quantity of low-quality weed price reports made within the state.  
+
+\pagebreak
+
+#Read/Import Data 
+The function 'read_csv()' from the 'readr' package is used to read the dataset. The dataset's URL is inserted into the function's input surrounded by quotation marks. This is then assigned to the arbitrary variable name 'df' as shown in the code below:
+```{r include=TRUE,message=FALSE}
+df<-read_csv("https://github.com/frankbi/price-of-weed/raw/master/data/weedprices01012014.csv")
+```
+The function 'head()' is used to produce a small snapshot output of the data frame, consisting of all the columns but not all the rows. The variable 'df' is inserted in to the function's input as seen below:
+```{r include = TRUE}
+head(df)
+```
+
+#Inspect and Understand  
+##Dimensions
+The dimensions of the data frame can be checked using the 'dim()' function. Inserting 'df' into the input of the function gives us the output below: 
+```{r include = TRUE}
+dim(df)
+```
+As we can see here the dimensions of our data frame consists of 51 observations and 7 variables.
+
+##Data Types
+###Variable Data Type Check
+Each variable in our data frame is in a certain data type. To check the data types of our variables, we can use the 'mode()' function. To check the data type of variable 'State' we specify in the functions input 'df$State'. The dollar sign between our data frame name and variable name specifies which variable we wish to use. This is produced below:
+```{r include = TRUE}
+mode(df$State)
+```
+To save time and space, we can use the function 'sapply()' to apply a certain function to an element the same number of times as the length of the element. For this function we will input our data frame 'df' and the function 'mode()' to obtain the data types of all variables within our data frame. This can be seen below:
+```{r include = TRUE}
+sapply(df,mode)
+```
+Above we can see each variables' data type. According to this 'State', 'HighQ', 'MedQ', and 'LowQ' are all character-based variables. 'HighQN', 'MedQN', and 'LowQN' are all numeric based variables. This indicates that variables 'HighQ', 'MedQ', and 'LowQ' are all in the wrong format because we wish them to be numerical values, as they are price in US dollars, rather than a character string. This can be corrected as shown below. 
+
+###Variable Data Type Change
+To change the data type of a particular variable from character-based to numeric-based, we use the function 'as.numeric()'. The code for changing the data type of variable 'HighQN' to numeric is produced below:
+```{r include = TRUE}
+as.numeric(df$HighQ)
+```
+Our code above produced nothing but 'NA'. This indicates something is not right. By checking a sample of our variable, using the function 'head()' again, we can pick up whats wrong:
+```{r include = TRUE}
+head(df$HighQ)
+```
+As we can see from our sample, each value in our variable 'HighQ' starts with the special character '\$'. This is the reason our variable was initially assigned to the character-based data type. In order for us to change our data type to 'numeric', we must first remove all non-numeric values from each value within the variable.  
+To do this we use the function 'gsub()' which replaces a certain input with a new defined input. The inputs we will give the function will be "\\\\$","", and the desired variable's name. The first input denotes us choosing the dollar sign. The double slashes in front indicate us escaping or 'breaking' the special character as the dollar sign has a unique purpose when defining what text to choose for replacement. We do not need to go into those details as it will not be necessary for this document. The second input is just an empty replacement as we wish to replace the dollar sign with nothing. The third input is the desired variable we wish to change. To alter the variable, each one must be reassigned to itself with the appropriate functional changes as seen above. This code can be seen below:
+```{r include = TRUE}
+df$HighQ <- gsub("\\$", "", df$HighQ)
+df$MedQ <- gsub("\\$", "", df$MedQ)
+df$LowQ <- gsub("\\$", "", df$LowQ)
+```
+Above we can see that the three variables that were changed. In order to check that the above code was successful, we can reuse the 'head()' function discussed above:
+```{r include = TRUE}
+head(df)
+```
+\pagebreak 
+From the table above, we can see that all three modified variables are in the correct format. Now we can return to using the 'as.numeric()' function discussed above. Remember that we must reassign the data frame variables in order to change them, as seen in the code below:
+```{r include = TRUE}
+df$HighQ <- as.numeric(df$HighQ)
+df$MedQ <- as.numeric(df$MedQ)
+df$LowQ <- as.numeric(df$LowQ)
+```
+To check that the changes made were correct we can revisit our 'sapply()' and 'mode()' functions:
+```{r include = TRUE}
+sapply(df,mode)
+```
+Excellent, we can now see that all our data frame variables are in the correct data type.
+
+##Factor and Levels
+Factors are useful for representing categorical date. Within our data frame, none of our variables would benefit from being categorised so no factors or levels will be used.
+
+##Column Name Corrections
+###Checking of Column Names
+To check the current column names of our data frame, we can use the 'colnames()' function, including 'df' as the functions input:
+```{r include = TRUE}
+colnames(df)
+```
+From the information above we can get a general idea of what the columns represent. There is room for improvement though.
+
+###Changing of Column Names
+Changing of column names can be done using the 'rename()' function. This function's inputs take 'df', the data frame containing the columns, and 'new_name=old_name'. The second input can be repeated for as many columns that need to be changed. Reassigning the data frame will save the new column names as seen below:
+```{r include = TRUE}
+df <- rename(df,HQ_Price=HighQ,
+             HQ_Reports=HighQN,
+             MQ_Price=MedQ,
+             MQ_Reports=MedQN,
+             LQ_Price=LowQ,
+             LQ_Reports=LowQN)
+```
+\pagebreak
+Let's recheck the data frame's column names using the 'colnames()' function: 
+```{r include = TRUE}
+colnames(df)
+```
+Great, we can see that all the desired changes were made and the column names give us a better indication of what the data is conveying.
+
+##Final Check
+Let's do one last final check of our modified data frame to make sure everything is in order. We can do this by simply calling the variable name assigned to our data frame:
+```{r include = TRUE}
+df
+```
+Everything seems to be in order. 
+\pagebreak
+
+#Subsetting
+##Subsetting the data frame
+In order to subset the data frame, we must create a new variable to store the subset. I have chosen the name 'subDf' but this is arbitrary. We wish to only take the first 10 values from each variable in the previous data frame. To do this we can revisit our function 'head()' with a slight addition to the inputs. The first input will remain 'df', as this is the data frame we wich to subset from, but our second input will be an integer indicating how many observations we wish to display. In this case, we will use '10' as shown below: 
+```{r include = TRUE}
+subDf <- head(df,10)
+```
+To check this was done correctly we call our newly created data frame with the code below:
+```{r include = TRUE}
+subDf
+```
+
+##Creating the Matrix
+###Initial Matrix
+To convert our subset into a matrix we can use the function 'data.matrix()'. This function will take the input of the desired data frame we wish to convert. In our case, it is 'subDf'. I have also assigned this matrix to a new variable name 'matrixDf' as seen below:
+```{r include = TRUE}
+matrixDf <- data.matrix(subDf)
+```
+To reveal this matrix we can call its name:
+```{r include = TRUE}
+matrixDf
+```
+As we see above our matrix contains an error in our 'State' column. The reason for this error will be discussed later. For now, let's just fix this.
+
+###Fixing Matrix
+
+Because our 'State' column was causing our matrix issues, we will create a new matrix, over the top of our old one, excluding the 'state' column. To do this we follow the 'data.matrix()' function explanation above but we must alter our input. Since we want all 7 columns except for the first, we index our data frame from column 2 through 7 using the code "[2:7]". This can be previewed below: 
+```{r include = TRUE}
+matrixDf <- data.matrix(subDf[2:7])
+```
+To ensure this worked correctly, let's call our new matrix:
+```{r include = TRUE}
+matrixDf
+```
+We can now see that we don't have any errors but the state column is missing. To rectify this we can change our matrix row names to the names of our 'State' column.  
+
+### Matrix Row Name Change  
+Since we wish to change our matrix row names to the state names from our data frames column 'State', we can use the function 'rownames()'. This function alters data on its own so there is no need to reassign any variables. The input for the function will be our matrix name 'matrixDf'. In order to give it the right row names, we will assign the row names by inputting 'subDf$State' as seen below:
+```{r include = TRUE}
+rownames(matrixDf) <- subDf$State
+```
+To finalise everything lets call up our matrix:
+```{r include = TRUE}
+matrixDf
+```
+Excellent! We can see our matrix is fixed. 
+
+##Matrix Structure Check
+Our matrix has a particular structure. To check this structure we can rely on our 'mode()' function used above. The input for this function will be 'matrixDf':
+```{r include = TRUE}
+mode(matrixDf)
+```
+As we can see the structure of our matrix is 'numeric'. This is due to the function 'data.matrix()', as this function coverts all variables within the data frame to 'numeric' data type, before binding together all columns of the matrix. The function converting all variables into the datatype 'numeric' is the reason we had 'NA's as the outcome of our initial matrix for the 'State' column. The 'State' column was in the datatype 'character' and as we have seen above, converting elements into a 'numeric' datatype need to be in the correct format. E.G. '345.67' -> 345.67, 'Arkansas' -> NA
+
+\pagebreak
+
+#Create a new Data Frame
+
+##Vector Creation
+
+To create our data frame with 2 variables and 10 observations, we must first create two vectors. Our first vector will be our ordinal variable called 'chilli_colour', our second vector will be our integer variable called 'chilli_length_cm'. Note then when assigning the new variables, each one has a 'c' infront of the list, to indicate that it is a vector, as seen here:
+```{r include = TRUE}
+chilli_colour <- c('Red','Yellow','Red','Green','Green','Orange','Yellow',
+                   'Green','Red','Orange')
+chilli_length_cm <- c(3,8,2,12,10,5,9,15,2,6)
+```
+Seen above are our two vectors. The vector 'chilli_colour', indicates the observed colour of each respective chilli. The vector 'chilli_length_cm', indicates the length of the respective chilli in centimetres. Now that we have our two vectors we can move onto creating our data frame.
+
+##Data Frame Creation
+The forming of our data frame will be taken care of with the function 'data.frame()'. The inputs for this function will be the vectors created above. We will assign a new name for the creation of our data frame:
+```{r include = TRUE}
+chilli_df <- data.frame(chilli_colour,chilli_length_cm)
+```
+Let's see if this worked by calling our new data frame:
+```{r include = TRUE}
+chilli_df
+```
+With our dataframe created, we can now run a few checks to see if everything is formatted properly. 
+
+##Variable Data Type Check
+Before we check the factor and levels of our data frame lets have a quick look at our variable data types, using the previously discussed function, 'sapply()' and 'mode()':
+```{r include = TRUE}
+sapply(chilli_df,mode)
+```
+Here we can see that both variables data types are 'numeric', but why is this seeing as our variable 'chilli_colour' are all character strings? The answer to this is in its factor.
+
+
+##Factor and Levels
+The function 'data.frame()' converts all inputs to numeric, including character vectors. This is because of its automatic nature to factor all 'character' based variables. The variable 'chilli_colour' has been factored and given levels based on its contents. this can  seen using the 'levels()' function. As we wish to only see the levels of our 'chilli_colour' column, we will specify this in the input, as seen here:
+```{r include = TRUE}
+levels(chilli_df$chilli_colour)
+```
+The contents above are the levels of our factored variable 'chilli_colour', but they aren't ordered correctly.
+
+##Level Ordering
+To order levels of a factor we can use the 'factor()' function. Our 'chilli_colour' variable is not in the correct order and we wish to display the 'hotness' of each respective chilli, through the order 'Red','Orange','Yellow', and 'Green'. To do so we specify in the 'factor()' function's second input the 'levels=c()' argument, followed with the correct order in which we desire the levels. We must also specify which variable we wish to change, and the reassignment of the variable. This can be seen in the code below:
+```{r include = TRUE}
+chilli_df$chilli_colour <- factor(chilli_df$chilli_colour, 
+                                  levels=c('Red','Orange','Yellow','Green'))
+```
+To check the reordering was successful, we can reuse our 'levels()' function:
+```{r include = TRUE}
+levels(chilli_df$chilli_colour)
+```
+Excellent, our levels are in order!
+
+##Variable Addition
+To add another variable to our existing data frame, we must first create the vector we wish to add. The numerical vector I will create will be named 'chilli_seed_count', and it will contain the respective see count of the chillis. Remember to use the 'c' before our list to ensure it is created into a vector:
+```{r include = TRUE}
+chilli_seed_count <- c(8,5,9,3,2,7,4,1,10,6)
+```
+Next, we must add this to our existing data frame. To do this we can use the function 'cbind()'. This function will take the input of the original data frame, plus the addition we wish to add. In this case, it will be our 'chilli_seed_count' vector. We must reassign our original data frame to save the changes:
+```{r include = TRUE}
+chilli_df<-cbind(chilli_df,chilli_seed_count)
+```
+Let's see if this worked by calling our new modified data frame:
+```{r include = TRUE}
+chilli_df
+```
+Perfect! Our data frame is complete. 
+
+#References
+
+Baglin, J. (2020). R Bootcamp - Course 2: Working with Data. [online] Available at: https://astral-theory-157510.appspot.com/secured/RBootcamp_Course_02.html#overview [Accessed 15 Aug. 2020].
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
